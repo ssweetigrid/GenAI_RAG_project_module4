@@ -1,0 +1,81 @@
+version: "3.9"
+
+# ============================================================
+#  Full-stack RAG Docker Compose
+#  Services:
+#    rag-app    – Streamlit UI (port 8501)
+#    qdrant     – Vector database (port 6333)
+#    langfuse   – Observability (port 3000)
+#    postgres   – Langfuse database
+# ============================================================
+
+services:
+
+  # ── RAG Streamlit Application ─────────────────────────────────────────
+  rag-app:
+    build:
+      context: ..        # Build from the project root (where Dockerfile is)
+      dockerfile: Dockerfile
+    container_name: rag_streamlit
+    ports:
+      - "8501:8501"
+    volumes:
+      # Mount your GCP key so the app can authenticate
+      - ../keys:/app/keys:ro
+      # Mount data so processed files persist
+      - ../data:/app/data
+      # Mount .env
+      - ../.env:/app/.env:ro
+    environment:
+      - QDRANT_HOST=qdrant       # Use Docker service name instead of localhost
+      - QDRANT_PORT=6333
+    depends_on:
+      qdrant:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ── Qdrant Vector Database ────────────────────────────────────────────
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: rag_qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6333/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Langfuse Observability ────────────────────────────────────────────
+  langfuse-server:
+    image: langfuse/langfuse:latest
+    container_name: rag_langfuse
+    depends_on:
+      - langfuse-db
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://langfuse:langfuse@langfuse-db:5432/langfuse
+      NEXTAUTH_SECRET: change-this-secret-in-production
+      NEXTAUTH_URL: http://localhost:3000
+      SALT: change-this-salt-in-production
+    restart: unless-stopped
+
+  langfuse-db:
+    image: postgres:15
+    container_name: rag_langfuse_db
+    environment:
+      POSTGRES_USER: langfuse
+      POSTGRES_PASSWORD: langfuse
+      POSTGRES_DB: langfuse
+    volumes:
+      - langfuse_db_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  qdrant_data:
+  langfuse_db_data:

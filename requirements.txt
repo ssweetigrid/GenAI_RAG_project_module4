@@ -1,0 +1,39 @@
+# ─── Core ───────────────────────────────────────────────
+google-cloud-aiplatform>=1.38.0
+google-genai>=0.5.0
+vertexai
+
+# ─── PDF Processing ──────────────────────────────────────
+pymupdf                  # fitz  – image & text extraction
+pdfplumber               # table extraction
+pypdf                    # metadata
+
+# ─── RAG Framework ───────────────────────────────────────
+langchain>=0.2.0
+langchain-community>=0.2.0
+langchain-google-vertexai>=1.0.0
+
+# ─── Vector Stores ───────────────────────────────────────
+faiss-cpu
+qdrant-client
+
+# ─── Embeddings / Re-ranking ─────────────────────────────
+sentence-transformers    # dense embeddings + cross-encoder
+rank-bm25                # sparse BM25 retrieval
+
+# ─── Evaluation ──────────────────────────────────────────
+ragas
+datasets
+langfuse
+
+# ─── UI ──────────────────────────────────────────────────
+streamlit>=1.35.0
+gradio
+
+# ─── Utilities ───────────────────────────────────────────
+python-dotenv
+pandas
+openpyxl
+Pillow
+tqdm
+numpy
